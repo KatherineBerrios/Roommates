@@ -1,0 +1,10 @@
+{
+  "gastos": [
+    {
+      "id": "9fd4db",
+      "roommate": "Alan Brito",
+      "descripcion": "Articulos de limpieza",
+      "monto": "2000"
+    }
+  ]
+}
