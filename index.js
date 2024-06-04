@@ -44,15 +44,16 @@ app.get("/gastos", (req, res) => {
 app.post("/gasto", async (req, res) => {
   try {
     //Crea una variable nuevoGasto con las propiedades recibidas en el cuerpo de la consulta
-    const { roommate, descripcion, monto } = req.query;
-    const nuevoGasto = { id: uuidv4().slice(30), roommate, descripcion, monto };
+    const roommate = roommateSelected;
+    const { descripcion, monto } = req.query;
+    const nuevoGasto = { id: uuidv4().slice(30), roommate , descripcion, monto };
     //Almacena en una variable la data del archivo Gastos.json y de su arreglo gastos
-    const gastosJSON = JSON.parse(fs.readFileSync("Gastos.json", "utf8",2));
+    const gastosJSON = JSON.parse(fs.readFileSync("Gastos.json", "utf8"));
     const gastos = gastosJSON.gastos;
     //Agrega el gasto creado en el arreglo del JSON
     gastos.push(nuevoGasto);
-    // Sobrescribe el archivo Gastos.json con el arreglo modificado
-    fs.writeFileSync("Gastos.json", JSON.stringify(gastosJSON));
+    // Sobrescribe el archivo Gastos.json con el arreglo nuevo
+    fs.writeFileSync("Gastos.json", JSON.stringify(gastosJSON, null, 2));
     res.send("Gasto agregado con éxito");
   } catch (error) {
     console.error("Error al agregar gasto", error);
@@ -63,9 +64,9 @@ app.post("/gasto", async (req, res) => {
 // *Crear la ruta PUT /gasto
 app.put("/gasto", async (req, res) => {
   try {
-    //Crea una variable editGasto con las propiedades recibidas en el cuerpo de la consulta
     const { id } = req.params;
     const { descripcion, monto } = req.query;
+    //Crea una variable editGasto con las propiedades recibidas en el cuerpo de la consulta
     const editGasto = { descripcion, monto };
     //Almacena en una variable la data del archivo Gastos.json y de su arreglo gastos
     const gastosJSON = JSON.parse(fs.readFileSync("Gastos.json", "utf8"));
@@ -73,43 +74,47 @@ app.put("/gasto", async (req, res) => {
     // Método map para sobrescribir el objeto
     gastosJSON.gastos = gastos.map(
       g => g.id ===id ? editGasto: g);
-    // Sobrescribe el archivo Gastos.json con el arreglo modificado
-    fs.writeFileSync("Gastos.json", JSON.stringify(gastosJSON, null, 2));
-    res.send("Gasto editado con éxito");
-  } catch (error) {
-    console.error("Error al agregar gasto", error);
-    res.status(500).send("Internal server error");
-  }
-});
+      // Sobrescribe el archivo Gastos.json con el arreglo modificado
+      fs.writeFileSync("Gastos.json", JSON.stringify(gastosJSON, null, 2));
+      res.send("Gasto editado con éxito");
+    } catch (error) {
+      console.error("Error al agregar gasto", error);
+      res.status(500).send("Internal server error");
+    }
+  });
 
-//Crear la ruta POST /roommate
-app.get("/roommate", async (req, res) => {
-  try {
-  const { data } = await axios.get("https://randomuser.me/api");
-  const randomUser = await data.results[0];
-  const roommate = {
-    name: randomUser.name.first,
-    lastname: randomUser.name.last,
-  };
-  const roommates = JSON.parse(fs.readFileSync("Roommates.json", "utf8", 2));
-  roommates.push(roommate);
-  fs.writeFileSync("Roommates.json", JSON.stringify(roommates));
-  res.send();
-  } catch (error) {
-    console.error("Error al agregar roommate", error);
-    res.status(500).send("Internal server error");
-  }
-});
+  // *Crear la ruta POST /roommate
+  app.get("/roommate", async (req, res) => {
+    try {
+      // Crea un nuevo roommate
+      const { data } = await axios.get("https://randomuser.me/api");
+      const randomUser = await data.results[0];
+      const roommate = {
+        name: randomUser.name.first,
+        lastname: randomUser.name.last,
+        debe: req.query,
+        recibe: req.query
+      };
+      const roommates = JSON.parse(fs.readFileSync("Roommates.json", "utf8"));
+      roommates.push(roommate);
+      // Sobrescribe el archivo Roommates.json con el nuevo roommate
+      fs.writeFileSync("Roommates.json", JSON.stringify(roommates, null, 2));
+      res.send();
+    } catch (error) {
+      console.error("Error al agregar roommate", error);
+      res.status(500).send("Internal server error");
+    }
+  });
 
-// *Crear la ruta DELETE /gasto
-app.delete("/gasto", async (req, res) => {
-  try {
-    //Crea una variable nuevoGasto con las propiedades recibidas en el cuerpo de la consulta
-    const { id } = req.query;
+  // *Crear la ruta DELETE /gasto
+  app.delete("/gasto", async (req, res) => {
+    try {
+      //Crea una variable nuevoGasto con las propiedades recibidas en el cuerpo de la consulta
+      const { id } = req.query;
     //Almacena en una variable la data del archivo Gastos.json y de su arreglo gastos
     const gastosJSON = JSON.parse(fs.readFileSync("Gastos.json", "utf8"));
     const gastos = gastosJSON.gastos;
-    //
+    // Filtra los datos recibidos a través del id
     gastosJSON.gastos = gastos.filter((g) => (g.id !== id));
     // Sobrescribe el archivo Gastos.json con el arreglo modificado
     fs.writeFileSync("Gastos.json", JSON.stringify(gastosJSON, null, 2));
